@@ -1,9 +1,9 @@
 package org.game;
 
-import org.game.home.MainWindow;
+import org.game.flabbybird.FlappyBird;
 
 public class Main {
     public static void main(String[] args) {
-        new MainWindow();
+        new FlappyBird().start();
     }
 }
