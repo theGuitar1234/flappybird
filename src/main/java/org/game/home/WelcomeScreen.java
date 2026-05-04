@@ -2,7 +2,6 @@ package org.game.home;
 
 import java.awt.Dimension;
 import java.awt.Rectangle;
-
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -79,19 +78,19 @@ public class WelcomeScreen {
         Dimension b = bird.getPreferredSize();
         Dimension ba = base.getPreferredSize();
 
-        int xBird = (jpanel.getWidth() - b.width) / 16;
-        int yBird = (int) ((jpanel.getHeight() - b.height) / 1.5);
+        int xBird = b.width;
+        int yBird = (jpanel.getHeight() - b.height) / 2;
 
         int xBase = 0;
-        int yBase = jpanel.getHeight() + AppContext.BASE_HEIGHT;
+        int yBase = jpanel.getHeight() - AppContext.BASE_HEIGHT;
 
         bird.setBounds(new Rectangle(xBird, yBird, b.width, b.height));
         base.setBounds(new Rectangle(xBase, yBase, ba.width, ba.height));
 
         Dimension s = startGame.getPreferredSize();
 
-        int xStartGame = (jpanel.getWidth() - s.width) / 5;
-        int yStartGame = (jpanel.getHeight() - s.height) / 2;
+        int xStartGame = (jpanel.getWidth() - s.width) / 2;
+        int yStartGame = (jpanel.getHeight()/2 - s.height);
 
         startGame.setBounds(new Rectangle(xStartGame, yStartGame, s.width, s.height));
 
@@ -101,7 +100,7 @@ public class WelcomeScreen {
     }
 
     private void initPanel(JPanel jpanel) {
-        jpanel.setSize(AppContext.HEIGHT, AppContext.WIDTH);
+        jpanel.setSize(AppContext.WIDTH, AppContext.HEIGHT);
         jpanel.setPreferredSize(new Dimension(AppContext.WIDTH, AppContext.HEIGHT));
         jpanel.setVisible(true);
         jpanel.setOpaque(false);

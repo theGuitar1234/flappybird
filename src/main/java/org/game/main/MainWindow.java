@@ -5,29 +5,28 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
 import java.nio.file.Paths;
 import java.util.Map;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import org.game.engine.Engine;
 import org.game.gamescreen.Game;
-import org.game.gamescreen.Game.RotatableLabel;
 import org.game.home.WelcomeScreen;
 import org.game.util.GenerateRandom;
 import org.game.util.constants.AppContext;
 
 public class MainWindow {
 
-    private static boolean isRunning = false;
-    
     private static final String TITLE = "Flappy Bird";
+    private static volatile boolean isRunning = false;
 
     private JFrame jframe;
     private JPanel jpanel;
+    private Game game;
 
     private static final String ICON_PATH = Paths.get(AppContext.SYSTEM, "src\\main\\resources\\favicon.png").toString();
     private static final ImageIcon imageIcon = new ImageIcon(ICON_PATH);
@@ -48,9 +47,14 @@ public class MainWindow {
             jframe.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
-                    Map<String, RotatableLabel> assets = new Game().initGame(jframe);
-                    new Engine().run(jframe, assets);
                     isRunning = true;
+
+                    game = new Game();
+                    game.initGame(jframe);
+
+                    jpanel = game.getJPanel();
+                    Map<String, JLabel> assets = game.getAssets();
+                    new Engine().run(jpanel, jframe, assets);
 
                     jframe.removeMouseListener(this);
                 }
@@ -62,7 +66,7 @@ public class MainWindow {
         jframe.setSize(AppContext.WIDTH, AppContext.HEIGHT);
         jframe.setPreferredSize(new Dimension(AppContext.WIDTH, AppContext.HEIGHT));
         jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        jframe.setResizable(false);
+        jframe.setResizable(true);
     }
 
     private static void setIcon(JFrame jframe) {

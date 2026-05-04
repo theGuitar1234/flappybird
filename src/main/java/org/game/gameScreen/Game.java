@@ -1,11 +1,7 @@
 package org.game.gamescreen;
 
 import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.geom.AffineTransform;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -21,12 +17,23 @@ import org.game.util.constants.AppContext;
 public class Game {
 
     private JPanel jpanel;
+    private Timer animationTimer;
+
+    public JPanel getJPanel() {
+        return this.jpanel;
+    }
+
     private RotatableLabel bird;
     private JLabel base;
 
+    private Map<String, JLabel> assets;
+
+    public Map<String, JLabel> getAssets() { return this.assets; }
+    public void setAssets(Map<String, JLabel> assets) { this.assets = assets; }
+
     private static final int RAND_BIRD = GenerateRandom.generateRandom(0, 3);
 
-    public Map<String, RotatableLabel> initGame(JFrame jframe) {
+    public void initGame(JFrame jframe) {
 
         jpanel = new JPanel();
         bird = new RotatableLabel();
@@ -43,11 +50,11 @@ public class Game {
         root.revalidate();
         root.repaint();
 
-        return Map.of(AppContext.BIRD_KEY, bird);
+        this.setAssets(Map.of(AppContext.BIRD_KEY, bird));
     }
 
     private void initPanel(JPanel jpanel) {
-        jpanel.setSize(AppContext.HEIGHT, AppContext.WIDTH);
+        jpanel.setSize(AppContext.WIDTH, AppContext.HEIGHT);
         jpanel.setPreferredSize(new Dimension(AppContext.WIDTH, AppContext.HEIGHT));
         jpanel.setVisible(true);
         jpanel.setOpaque(false);
@@ -60,8 +67,8 @@ public class Game {
 
         Dimension b = bird.getPreferredSize();
 
-        int xBird = (jpanel.getWidth() - b.width) / 16;
-        int yBird = (int) ((jpanel.getHeight() - b.height) / 1.5);
+        int xBird = b.width;
+        int yBird = (jpanel.getHeight() - b.height) / 2;
 
         bird.setBounds(new Rectangle(xBird, yBird, b.width, b.height));
 
@@ -71,12 +78,12 @@ public class Game {
         Dimension ba = base.getPreferredSize();
 
         int xBase = 0;
-        int yBase = jpanel.getHeight() + AppContext.BASE_HEIGHT;
+        int yBase = jpanel.getHeight() - AppContext.BASE_HEIGHT;
 
         base.setBounds(new Rectangle(xBase, yBase, ba.width, ba.height));
 
-        jpanel.add(bird);
         jpanel.add(base);
+        jpanel.add(bird);
     }
 
     private void flapAnimation(JLabel bird) {
@@ -92,52 +99,5 @@ public class Game {
         };
 
         timer.schedule(timerTask, 0, AppContext.REFRESH);
-    }
-
-    public static class RotatableLabel extends JLabel {
-
-        private double angleRad = 0.0;
-
-        public double getRotationDegrees() {
-            return Math.toDegrees(angleRad);
-        }
-
-        public void setRotationDegrees(double degrees) {
-            this.angleRad = Math.toRadians(degrees);
-            revalidate();
-            repaint();
-        }
-
-        @Override
-        public Dimension getPreferredSize() {
-            Dimension d = super.getPreferredSize();
-
-            double sin = Math.abs(Math.sin(angleRad));
-            double cos = Math.abs(Math.cos(angleRad));
-
-            int w = (int) Math.ceil(d.width * cos + d.height * sin);
-            int h = (int) Math.ceil(d.width * sin + d.height * cos);
-
-            return new Dimension(w, h);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            int cx = getWidth() / 2;
-            int cy = getHeight() / 2;
-
-            AffineTransform old = g2.getTransform();
-            g2.rotate(angleRad, cx, cy);
-
-            super.paintComponent(g2);
-
-            g2.setTransform(old);
-            g2.dispose();
-        }
-        
     }
 }
