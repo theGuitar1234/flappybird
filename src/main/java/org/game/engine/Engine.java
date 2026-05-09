@@ -1,30 +1,32 @@
 package org.game.engine;
 
 import java.awt.Dimension;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
-import javax.swing.ImageIcon;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
-import org.game.engine.sound.Sound;
-import org.game.gamescreen.RotatableLabel;
+import org.game.gamescreen.RotatableSprite;
+import org.game.gamescreen.SpriteComponent;
+import org.game.util.AssetLoader;
+import org.game.util.AudioLoader;
 import org.game.util.GenerateRandom;
 import org.game.util.constants.AppContext;
 
 public class Engine {
 
-    private JLabel belowPipe;
-    private RotatableLabel abovePipe;
+    private Runnable onGameOver;
 
     private static final double V = 10;
-    private static final double g = 9.8;
+    private static final double g = 12;
 
     private static double v;
     private static double t;
@@ -32,94 +34,118 @@ public class Engine {
     private static double rotationInDecrement;
     private static double rotation;
 
-    private static boolean isInitAnimationBound = false;
-    private static boolean isInitRotateBound = false;
     private static volatile boolean isRunning = false;
     private static boolean isBound = false;
 
-    private static Timer animationTimer;
-    private static Timer rotateTimer;
+    // private Timer animationTimer;
+    // private Timer rotateTimer;
+    // private Timer gravityTimer;
+    // private Timer pipeSpawnTimer;
+    // private final List<Timer> pipeTimerBuffer= new ArrayList<>();
+
+    private Timer engineTimer;
+
+    private long lastFrameNanos;
+    private double pipeSpawnAccumulatorMs = 0.0;
+
+    private double birdY;
+
+    private boolean gravityActive = false;
+    private boolean rotationActive = false;
+
+    private final List<PipeState> pipes = new ArrayList<>();
+
+    private static final int ENGINE_FRAME_MS = 16;
+    private static final int MAX_FRAME_MS = 50;
+
+    private static final double PIPE_PIXELS_PER_STEP = 5.0;
+
     private static MouseAdapter mouseAdapter;
 
     private int score = 0;
-    private final JLabel scoreFirstDigit = new JLabel();
-    private final JLabel scoreSecondDigit = new JLabel();
-    private final JLabel scoreThirdDigit = new JLabel();
+    private final SpriteComponent scoreFirstDigit = new SpriteComponent();
+    private final SpriteComponent scoreSecondDigit = new SpriteComponent();
+    private final SpriteComponent scoreThirdDigit = new SpriteComponent();
 
-    private final JLabel gameOverMessage = new JLabel();
+    private final SpriteComponent gameOverMessage = new SpriteComponent();
 
     private static final int RAND_PIPE = GenerateRandom.generateRandom(0, 2);
 
-    public void run(JPanel jpanel, JFrame jframe, Map<String, JLabel> assets) {
+    public Engine(Runnable onGameOver) {
+        this.onGameOver = onGameOver;
+    }
 
+    public void run(JPanel jpanel, JFrame jframe, Map<String, SpriteComponent> assets) {
         isRunning = true;
 
-        Sound.init();
-
-        RotatableLabel bird = (RotatableLabel) assets.get(AppContext.BIRD_KEY);
+        RotatableSprite bird = (RotatableSprite) assets.get(AppContext.BIRD_KEY);
 
         if (!isBound) {
             initMouseListener(jframe, jpanel, bird);
-            initPipes(jframe, jpanel, bird);
             initScore(jpanel, score);
             isBound = true;
         }
+
+        initEngineLoop(jframe, jpanel, bird);
     }
 
     private void displayScore(int score) {
         String strScore = String.format("%03d", score);
-        scoreFirstDigit.setIcon(new ImageIcon(AppContext.SCORES[Integer.parseInt(String.valueOf(strScore.charAt(0)))]));
-        scoreSecondDigit.setIcon(new ImageIcon(AppContext.SCORES[Integer.parseInt(String.valueOf(strScore.charAt(1)))]));
-        scoreThirdDigit.setIcon(new ImageIcon(AppContext.SCORES[Integer.parseInt(String.valueOf(strScore.charAt(2)))]));
+        scoreFirstDigit
+                .setImage(AssetLoader.load(AppContext.SCORES[Integer.parseInt(String.valueOf(strScore.charAt(0)))]));
+        scoreSecondDigit
+                .setImage(AssetLoader.load(AppContext.SCORES[Integer.parseInt(String.valueOf(strScore.charAt(1)))]));
+        scoreThirdDigit
+                .setImage(AssetLoader.load(AppContext.SCORES[Integer.parseInt(String.valueOf(strScore.charAt(2)))]));
     }
 
     private void initScore(JPanel jpanel, int score) {
         String strScore = String.format("%03d", score);
-        
+
         int y = 0;
         int x = jpanel.getWidth() / 2;
 
-        scoreFirstDigit.setSize(scoreFirstDigit.getPreferredSize());
-        scoreFirstDigit.setIcon(new ImageIcon(AppContext.SCORES[Integer.parseInt(String.valueOf(strScore.charAt(0)))]));
-        Dimension sf = scoreFirstDigit.getPreferredSize();
-        scoreFirstDigit.setBounds(new Rectangle(x - sf.width, y + sf.width, sf.width, sf.height));
+        // scoreFirstDigit.setSize(scoreFirstDigit.getPreferredSize());
+        BufferedImage sfIcon = AssetLoader
+                .load(AppContext.SCORES[Integer.parseInt(String.valueOf(strScore.charAt(0)))]);
+        scoreFirstDigit.setImage(sfIcon);
+        // Dimension sf = scoreFirstDigit.getPreferredSize();
+        int sfHeight = sfIcon.getHeight();
+        int sfWidth = sfIcon.getWidth();
+        scoreFirstDigit.setBounds(new Rectangle(x - sfWidth, y + sfWidth, sfWidth, sfHeight));
 
-        scoreSecondDigit.setSize(scoreSecondDigit.getPreferredSize());
-        scoreSecondDigit.setIcon(new ImageIcon(AppContext.SCORES[Integer.parseInt(String.valueOf(strScore.charAt(1)))]));
-        Dimension sd = scoreSecondDigit.getPreferredSize();
-        scoreSecondDigit.setBounds(new Rectangle(x, y + sd.width, sd.width, sd.height));
+        // scoreSecondDigit.setSize(scoreSecondDigit.getPreferredSize());
+        BufferedImage sdIcon = AssetLoader
+                .load(AppContext.SCORES[Integer.parseInt(String.valueOf(strScore.charAt(1)))]);
+        scoreSecondDigit.setImage(sdIcon);
+        // Dimension sd = scoreSecondDigit.getPreferredSize();
+        int sdHeight = sdIcon.getHeight();
+        int sdWidth = sdIcon.getWidth();
+        scoreSecondDigit.setBounds(new Rectangle(x, y + sdWidth, sdWidth, sdHeight));
 
-        scoreThirdDigit.setSize(scoreThirdDigit.getPreferredSize());
-        scoreThirdDigit.setIcon(new ImageIcon(AppContext.SCORES[Integer.parseInt(String.valueOf(strScore.charAt(2)))]));
-        Dimension st = scoreThirdDigit.getPreferredSize();
-        scoreThirdDigit.setBounds(new Rectangle(x + sd.width, y + st.width, st.width, st.height));
+        BufferedImage stIcon = AssetLoader
+                .load(AppContext.SCORES[Integer.parseInt(String.valueOf(strScore.charAt(2)))]);
+        // scoreThirdDigit.setSize(scoreThirdDigit.getPreferredSize());
+        scoreThirdDigit.setImage(stIcon);
+        // Dimension st = scoreThirdDigit.getPreferredSize();
+        int stHeight = stIcon.getHeight();
+        int stWidth = stIcon.getWidth();
+        scoreThirdDigit.setBounds(new Rectangle(x + sdWidth, y + stWidth, stWidth, stHeight));
 
         jpanel.add(scoreFirstDigit);
         jpanel.add(scoreSecondDigit);
         jpanel.add(scoreThirdDigit);
     }
 
-    private boolean detectCollision(JFrame jframe, RotatableLabel bird) {
+    private boolean detectCollision(JFrame jframe, RotatableSprite bird) {
         return (bird.getY() > jframe.getHeight() - AppContext.BASE_HEIGHT);
     }
 
-    private boolean detectCollision(JLabel pipe, JLabel bird) {
+    private boolean detectCollision(SpriteComponent pipe, SpriteComponent bird) {
         return (pipe.getBounds().intersects(bird.getBounds()));
     }
 
-    private void checkScore(JLabel pipe, JLabel bird) {
-        Boolean alreadyScored = (Boolean) pipe.getClientProperty("scored");
-
-        if (Boolean.TRUE.equals(alreadyScored)) return;
-        if (pipe.getX() + pipe.getWidth() < bird.getX()) {
-            score++;
-            pipe.putClientProperty("scored", true);
-            displayScore(score);
-            Sound.score();
-        }
-    }
-
-    private void initMouseListener(JFrame jframe, JPanel jpanel, RotatableLabel bird) {
+    private void initMouseListener(JFrame jframe, JPanel jpanel, RotatableSprite bird) {
         mouseAdapter = new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -128,176 +154,247 @@ public class Engine {
                     return;
                 }
 
-                initAnimation(jframe, jpanel, bird);
-                initRotate(bird);
-                Sound.flap();
+                animationinDecrement = 0.12;
+                v = V;
+                t = 0;
+
+                rotation = 0;
+                rotationInDecrement = 1.5;
+
+                birdY = bird.getY();
+
+                gravityActive = true;
+                rotationActive = true;
+
+                AudioLoader.play(AppContext.FLAP_AUD);
             }
         };
+
         jframe.addMouseListener(mouseAdapter);
     }
 
-    private void initAnimation(JFrame jframe, JPanel jpanel, RotatableLabel bird) {
-
-        animationinDecrement = 0.12;
-        v = V;
-        t = 0;
-
-        if (isInitAnimationBound)
+    private void initEngineLoop(JFrame jframe, JPanel jpanel, RotatableSprite bird) {
+        if (engineTimer != null && engineTimer.isRunning()) {
             return;
-        isInitAnimationBound = true;
+        }
 
-        animationTimer = new Timer(AppContext.REFRESH, e -> {
+        lastFrameNanos = System.nanoTime();
+
+        engineTimer = new Timer(ENGINE_FRAME_MS, e -> {
             if (!isRunning) {
-                animationTimer.stop();
+                stopEngineLoop();
                 return;
             }
 
-            double s = v - g * (Math.pow(t, 2));
-            t += animationinDecrement;
+            long now = System.nanoTime();
+            double frameMs = (now - lastFrameNanos) / 1_000_000.0;
+            lastFrameNanos = now;
 
-            int x = bird.getX();
-            int y = (int) (bird.getY() - s);
-
-            bird.setLocation(new Point(x, y));
-
-            if (detectCollision(jframe, bird)) {
-                gameOver(jframe, jpanel);
+            if (frameMs > MAX_FRAME_MS) {
+                frameMs = MAX_FRAME_MS;
             }
-        });
 
-        animationTimer.start();
-        // animationTimer.schedule(timerTask, 0, AppContext.REFRESH);
-    }
+            double scale = frameMs / AppContext.REFRESH;
 
-    private void initRotate(RotatableLabel bird) {
+            updateGravity(jframe, jpanel, bird, scale);
+            updateRotation(bird, scale);
+            updatePipeSpawning(jframe, jpanel, bird, frameMs);
+            updatePipes(jframe, jpanel, bird, scale);
 
-        rotation = 0;
-        rotationInDecrement = 1.5;
-
-        if (isInitRotateBound)
-            return;
-        isInitRotateBound = true;
-
-        rotateTimer = new Timer(AppContext.REFRESH, e -> {
-            if (!isRunning) {
-                rotateTimer.stop();
-                return;
-            }
-            if (rotation <= -90.0)
-                rotationInDecrement *= -1;
-
-            rotation -= rotationInDecrement;
-            bird.setRotationDegrees(rotation);
-        });
-
-        rotateTimer.start();
-        // rotateTimer.schedule(timerTask, 0, AppContext.REFRESH);
-    }
-
-    private void initPipes(JFrame jframe, JPanel jpanel, JLabel bird) {
-        animationTimer = new Timer(AppContext.PIPE_REFRESH, e -> {
-            if (!isRunning) {
-                animationTimer.stop();
-                return;
-            }
-            belowPipe = new JLabel();
-            belowPipe.setSize(belowPipe.getPreferredSize());
-            belowPipe.setIcon(new ImageIcon(AppContext.PIPE_PATHS[RAND_PIPE]));
-
-            Dimension bp = belowPipe.getPreferredSize();
-
-            int xBelowPipe = jpanel.getWidth() + bp.width;
-            // drops as Y increases
-            int belowPipeOffsetY = GenerateRandom.generateRandom(
-                    AppContext.BASE_HEIGHT + AppContext.VERTICAL_PIPE_LIMIT,
-                    jpanel.getHeight() - AppContext.VERTICAL_PIPE_LIMIT - AppContext.PIPE_GAP);
-            int yBelowPipe = belowPipeOffsetY;
-
-            belowPipe.setBounds(new Rectangle(xBelowPipe, yBelowPipe, bp.width, bp.height));
-
-            abovePipe = new RotatableLabel();
-            abovePipe.setRotationDegrees(180);
-            abovePipe.setSize(belowPipe.getPreferredSize());
-            abovePipe.setIcon(new ImageIcon(AppContext.PIPE_PATHS[RAND_PIPE]));
-
-            Dimension ap = abovePipe.getPreferredSize();
-
-            int xAbovePipe = jpanel.getWidth() + ap.width;
-            int abovePipeOffsetY = yBelowPipe;
-            int yAbovePipe = abovePipeOffsetY - ap.height - AppContext.PIPE_GAP;
-
-            abovePipe.setBounds(new Rectangle(xAbovePipe, yAbovePipe, ap.width, ap.height));
-
-            jpanel.add(belowPipe);
-            jpanel.add(abovePipe);
-            jpanel.revalidate();
             jpanel.repaint();
-            movePipes(jframe, jpanel, belowPipe, bird, bp, true);
-            movePipes(jframe, jpanel, abovePipe, bird, ap, false);
         });
 
-        animationTimer.start();
+        engineTimer.start();
     }
 
-    private void movePipes(JFrame jframe, JPanel jpanel, JLabel pipe, JLabel bird, Dimension p, boolean isBelowPipe) {
-        animationTimer = new Timer(AppContext.REFRESH, e -> {
-            if (!isRunning) {
-                animationTimer.stop();
-                return;
-            }
+    private void updateGravity(JFrame jframe, JPanel jpanel, RotatableSprite bird, double scale) {
+        if (!gravityActive) {
+            return;
+        }
+
+        double s = v - g * Math.pow(t, 2);
+        t += animationinDecrement * scale;
+
+        birdY -= s * scale;
+
+        int x = bird.getX();
+        int y = (int) Math.round(birdY);
+
+        bird.setLocation(x, y);
+
+        if (detectCollision(jframe, bird)) {
+            gameOver(jframe, jpanel);
+        }
+    }
+
+    private void updateRotation(RotatableSprite bird, double scale) {
+        if (!rotationActive) {
+            return;
+        }
+
+        if (rotation <= -90.0 && rotationInDecrement > 0) {
+            rotationInDecrement *= -1;
+        }
+
+        rotation -= rotationInDecrement * scale;
+
+        bird.setRotationDegrees(rotation);
+    }
+
+    private void updatePipeSpawning(JFrame jframe, JPanel jpanel, SpriteComponent bird, double frameMs) {
+        pipeSpawnAccumulatorMs += frameMs;
+
+        if (pipeSpawnAccumulatorMs < AppContext.PIPE_REFRESH) {
+            return;
+        }
+
+        pipeSpawnAccumulatorMs -= AppContext.PIPE_REFRESH;
+
+        spawnPipePair(jpanel);
+    }
+
+    private void spawnPipePair(JPanel jpanel) {
+        BufferedImage pipeIcon = AssetLoader.load(AppContext.PIPE_PATHS[RAND_PIPE]);
+
+        int pipeWidth = pipeIcon.getWidth();
+        int pipeHeight = pipeIcon.getHeight();
+
+        int xPipe = jpanel.getWidth() + pipeWidth;
+
+        int yBelowPipe = GenerateRandom.generateRandom(
+                AppContext.BASE_HEIGHT + AppContext.VERTICAL_PIPE_LIMIT,
+                jpanel.getHeight() - AppContext.VERTICAL_PIPE_LIMIT - AppContext.PIPE_GAP);
+
+        int yAbovePipe = yBelowPipe - pipeHeight - AppContext.PIPE_GAP;
+
+        SpriteComponent belowPipe = new SpriteComponent();
+        belowPipe.setImage(pipeIcon);
+        belowPipe.setBounds(new Rectangle(xPipe, yBelowPipe, pipeWidth, pipeHeight));
+
+        RotatableSprite abovePipe = new RotatableSprite();
+        abovePipe.setImage(pipeIcon);
+        abovePipe.setRotationDegrees(180);
+        abovePipe.setBounds(new Rectangle(xPipe, yAbovePipe, pipeWidth, pipeHeight));
+
+        jpanel.add(belowPipe);
+        jpanel.add(abovePipe);
+
+        pipes.add(new PipeState(belowPipe, xPipe, pipeWidth, true));
+        pipes.add(new PipeState(abovePipe, xPipe, pipeWidth, false));
+
+        jpanel.revalidate();
+    }
+
+    private void updatePipes(JFrame jframe, JPanel jpanel, SpriteComponent bird, double scale) {
+        Iterator<PipeState> iterator = pipes.iterator();
+
+        while (iterator.hasNext()) {
+            PipeState pipeState = iterator.next();
+            SpriteComponent pipe = pipeState.getSprite();
+
+            pipeState.setX(pipeState.getX() - PIPE_PIXELS_PER_STEP * scale);
+
+            int x = (int) Math.round((float) pipeState.getX());
+            int y = pipe.getY();
+
+            pipe.setLocation(x, y);
 
             if (detectCollision(pipe, bird)) {
                 gameOver(jframe, jpanel);
+                return;
             }
 
-            if (isBelowPipe) {
-                checkScore(pipe, bird);
+            if (pipeState.isBelowPipe()) {
+                checkScore(pipeState, bird);
             }
 
-            if (pipe.getX() < -p.getWidth())
+            if (pipe.getX() < -pipeState.getWidth()) {
                 jpanel.remove(pipe);
+                iterator.remove();
+            }
+        }
+    }
 
-            int x = (int) (pipe.getX() - 5);
-            int y = pipe.getY();
-            pipe.setLocation(new Point(x, y));
-        });
+    private void checkScore(PipeState pipeState, SpriteComponent bird) {
+        if (pipeState.isScored()) {
+            return;
+        }
 
-        animationTimer.start();
+        SpriteComponent pipe = pipeState.getSprite();
+
+        if (pipe.getX() + pipe.getWidth() < bird.getX()) {
+            score++;
+            pipeState.setScored(true);
+
+            displayScore(score);
+            AudioLoader.play(AppContext.SCORE_AUD);
+        }
     }
 
     private void gameOver(JFrame jframe, JPanel jpanel) {
+        if (!isRunning)
+            return;
         isRunning = false;
+        stopEngineLoop();
+        clearRuntimeState();
 
-        Sound.hit();
+        // if (animationTimer != null) {
+        // animationTimer.stop();
+        // }
+
+        if (onGameOver != null) {
+            onGameOver.run();
+        }
+
+        // Sound.hit();
         // Sound.stopHit();
-        Sound.close();
+        // Sound.close();
 
-        gameOverMessage.setSize(gameOverMessage.getPreferredSize());
-        gameOverMessage.setIcon(new ImageIcon(AppContext.GAMEOVER));
-        Dimension gm = gameOverMessage.getPreferredSize();
-        gameOverMessage.setBounds(new Rectangle(jpanel.getWidth()/2 - gm.width/2, jpanel.getHeight()/2 - gm.height, gm.width, gm.height));
-        
+        AudioLoader.play(AppContext.HIT_AUD);
+
+        // gameOverMessage.setSize(gameOverMessage.getPreferredSize());
+        // ImageIcon gameOverIcon = AssetLoader.load(AppContext.GAMEOVER);
+        BufferedImage gameOverIcon = AssetLoader.load(AppContext.GAMEOVER);
+        // gameOverMessage.setImage(gameOverIcon);
+        gameOverMessage.setImage(gameOverIcon);
+        // Dimension gm = gameOverMessage.getPreferredSize();
+        Dimension gm = new Dimension(gameOverIcon.getWidth(), gameOverIcon.getHeight());
+        gameOverMessage.setBounds(new Rectangle(jpanel.getWidth() / 2 - gm.width / 2,
+                jpanel.getHeight() / 2 - gm.height, gm.width, gm.height));
+
         jpanel.add(gameOverMessage);
         jpanel.revalidate();
         jpanel.repaint();
 
         // if (animationTimer != null) {
-        //     animationTimer.stop();
-        //     animationTimer = null;
+        // animationTimer.stop();
+        // animationTimer = null;
         // }
         // if (rotateTimer != null) {
-        //     rotateTimer.stop();
-        //     rotateTimer = null;
+        // rotateTimer.stop();
+        // rotateTimer = null;
         // }
 
         if (mouseAdapter != null) {
             jframe.removeMouseListener(mouseAdapter);
             mouseAdapter = null;
         }
+    }
 
-        jframe.removeMouseListener(mouseAdapter);
+    private void stopEngineLoop() {
+        if (engineTimer != null) {
+            engineTimer.stop();
+            engineTimer = null;
+        }
+    }
 
-        isInitAnimationBound = false;
-        isInitRotateBound = false;
+    private void clearRuntimeState() {
+        gravityActive = false;
+        rotationActive = false;
+
+        pipeSpawnAccumulatorMs = 0.0;
+        pipes.clear();
+
+        isBound = false;
     }
 }

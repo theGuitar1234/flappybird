@@ -1,10 +1,10 @@
 package org.game.util.constants;
 
-import java.nio.file.Paths;
-
 import org.game.util.GenerateRandom;
 
 public final class AppContext {
+
+    public static final String TITLE = "Flappy Bird";
 
     public static final int BASE_HEIGHT = 112;
     public static final int PIPE_GAP = 100;
@@ -16,61 +16,70 @@ public final class AppContext {
 
     public static final int REFRESH = 56;
     public static final int PIPE_REFRESH = 2250;
-        
+    public static final int BIRD_ANIMATION_REFRESH = 56;
+    public static final int WELCOME_ANIMATION_REFRESH = 16;
+    public static final double GRAVITY = 900.0;
+    public static final double FLAP_VELOCITY = -330.0;
+    public static final double PIPE_SPEED = 120.0;
+    public static final int BIRD_BOX_SIZE = 32;
+    public static final int BIRD_FRAME_INTERVAL_TICKS = 2;
+    
     public static final int WIDTH = 320;
     public static final int HEIGHT = 582;
     
-    public static final String SYSTEM = Paths.get(System.getProperty("user.dir")).toString();
+    // public static final String SYSTEM = Paths.get(System.getProperty("user.dir")).toString();
 
-    public static final String BASE = Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\base.png").toString();
+    public static final String BASE = "/sprites/base.png";
 
-    public static final String GAMEOVER = Paths.get(AppContext.SYSTEM, "src\\\\main\\\\resources\\\\sprites\\\\gameover.png").toString();
+    public static final String GAMEOVER = "/sprites/gameover.png";
 
     public static final String[] BACKGROUNDS = {
-        Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\background-day.png").toString(),
-        Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\background-night.png").toString(),
+        "/sprites/background-day.png",
+        "/sprites/background-night.png",
     };
 
     public static final String[][] BIRD_PATHS = {
         {
-            Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\bluebird-downflap.png").toString(),
-            Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\bluebird-midflap.png").toString(),
-            Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\bluebird-upflap.png").toString()
+            "/sprites/bluebird-downflap.png",
+            "/sprites/bluebird-midflap.png",
+            "/sprites/bluebird-upflap.png"
         },
         {
-            Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\redbird-downflap.png").toString(),
-            Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\redbird-midflap.png").toString(),
-            Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\redbird-upflap.png").toString()
+            "/sprites/redbird-downflap.png",
+            "/sprites/redbird-midflap.png",
+            "/sprites/redbird-upflap.png"
         },
         {
-            Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\yellowbird-downflap.png").toString(),
-            Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\yellowbird-midflap.png").toString(),
-            Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\yellowbird-upflap.png").toString()
+            "/sprites/yellowbird-downflap.png",
+            "/sprites/yellowbird-midflap.png",
+            "/sprites/yellowbird-upflap.png"
         },
     };
 
     public static final String[] PIPE_PATHS = {
-        Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\pipe-green.png").toString(),
-        Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\pipe-red.png").toString()
+        "/sprites/pipe-green.png",
+        "/sprites/pipe-red.png"
     };
 
     public static final String[] SCORES = {
-        Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\0.png").toString(),
-        Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\1.png").toString(),
-        Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\2.png").toString(),
-        Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\3.png").toString(),
-        Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\4.png").toString(),
-        Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\5.png").toString(),
-        Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\6.png").toString(),
-        Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\7.png").toString(),
-        Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\8.png").toString(),
-        Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\9.png").toString(),
+        "/sprites/0.png",
+        "/sprites/1.png",
+        "/sprites/2.png",
+        "/sprites/3.png",
+        "/sprites/4.png",
+        "/sprites/5.png",
+        "/sprites/6.png",
+        "/sprites/7.png",
+        "/sprites/8.png",
+        "/sprites/9.png",
     };
 
-    public static final String START_GAME = Paths.get(AppContext.SYSTEM, "src\\main\\resources\\sprites\\message.png").toString();
+    public static final String FAVICON = "/favicon.png";
 
-    public static final String FLAP_AUD = Paths.get(AppContext.SYSTEM, "src\\main\\resources\\audio\\wing.wav").toString();
-    public static final String HIT_AUD = Paths.get(AppContext.SYSTEM, "src\\main\\resources\\audio\\hit.wav").toString();
-    public static final String SCORE_AUD = Paths.get(AppContext.SYSTEM, "src\\main\\resources\\audio\\point.wav").toString();
+    public static final String START_GAME = "/sprites/message.png";
+
+    public static final String FLAP_AUD = "/audio/wing.wav";
+    public static final String HIT_AUD = "/audio/hit.wav";
+    public static final String SCORE_AUD = "/audio/point.wav";
 }
 

@@ -5,43 +5,39 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.nio.file.Paths;
 import java.util.Map;
 
-import javax.swing.ImageIcon;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import org.game.engine.Engine;
 import org.game.gamescreen.Game;
+import org.game.gamescreen.SpriteComponent;
 import org.game.home.WelcomeScreen;
+import org.game.util.AssetLoader;
 import org.game.util.GenerateRandom;
 import org.game.util.constants.AppContext;
 
 public class MainWindow {
 
-    private static final String TITLE = "Flappy Bird";
     private static volatile boolean isRunning = false;
+
+    private WelcomeScreen welcomeScreen;
 
     private JFrame jframe;
     private JPanel jpanel;
     private Game game;
 
-    private static final String ICON_PATH = Paths.get(AppContext.SYSTEM, "src\\main\\resources\\favicon.png").toString();
-    private static final ImageIcon imageIcon = new ImageIcon(ICON_PATH);
+    // private static final ImageIcon imageIcon = AssetLoader.load(AppContext.FAVICON);
     
     public MainWindow() {
 
-        jframe = new JFrame(TITLE);
+        jframe = new JFrame(AppContext.TITLE);
         setWindow(jframe);
         setIcon(jframe);
-
         initPanel(jframe);
-
         displayWindow(jframe);
-
-        new WelcomeScreen(jframe);
+        welcomeScreen = new WelcomeScreen(jframe);
         
         if (!isRunning) {
             jframe.addMouseListener(new MouseAdapter() {
@@ -49,12 +45,21 @@ public class MainWindow {
                 public void mouseClicked(MouseEvent e) {
                     isRunning = true;
 
+                    if (welcomeScreen != null) {
+                        welcomeScreen.stop();
+                        welcomeScreen = null;
+                    }
+
                     game = new Game();
                     game.initGame(jframe);
 
                     jpanel = game.getJPanel();
-                    Map<String, JLabel> assets = game.getAssets();
-                    new Engine().run(jpanel, jframe, assets);
+                    Map<String, SpriteComponent> assets = game.getAssets();
+                    new Engine(() -> {
+                        if (game != null) {
+                            game.stop();
+                        }
+                    }).run(jpanel, jframe, assets);
 
                     jframe.removeMouseListener(this);
                 }
@@ -66,11 +71,12 @@ public class MainWindow {
         jframe.setSize(AppContext.WIDTH, AppContext.HEIGHT);
         jframe.setPreferredSize(new Dimension(AppContext.WIDTH, AppContext.HEIGHT));
         jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        jframe.setResizable(true);
+        jframe.setResizable(false);
     }
 
     private static void setIcon(JFrame jframe) {
-        jframe.setIconImage(imageIcon.getImage());
+        // jframe.setIconImage(imageIcon.getImage());
+        jframe.setIconImage(AssetLoader.load(AppContext.FAVICON));
     }
 
     private static void displayWindow(JFrame jframe) {
@@ -80,12 +86,12 @@ public class MainWindow {
     private JPanel drawBackground() {
         jpanel = new JPanel() {
             int rand = GenerateRandom.generateRandom(0, 2);
-            Image img = new ImageIcon(AppContext.BACKGROUNDS[rand]).getImage();
+            Image bg = AssetLoader.load(AppContext.BACKGROUNDS[rand]);
 
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
+                g.drawImage(bg, 0, 0, getWidth(), getHeight(), this);
             }
         };
 

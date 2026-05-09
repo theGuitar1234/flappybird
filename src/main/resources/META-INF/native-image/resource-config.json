@@ -1,0 +1,58 @@
+{
+  "resources":{
+  "includes":[{
+    "pattern":"\\QMETA-INF/services/java.awt.im.spi.InputMethodDescriptor\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.lang.System$LoggerFinder\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/javax.sound.sampled.spi.AudioFileReader\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/javax.sound.sampled.spi.MixerProvider\\E"
+  }, {
+    "pattern":"\\Qaudio/hit.wav\\E"
+  }, {
+    "pattern":"\\Qaudio/wing.wav\\E"
+  }, {
+    "pattern":"\\Qfavicon.png\\E"
+  }, {
+    "pattern":"\\Qsprites/0.png\\E"
+  }, {
+    "pattern":"\\Qsprites/1.png\\E"
+  }, {
+    "pattern":"\\Qsprites/2.png\\E"
+  }, {
+    "pattern":"\\Qsprites/3.png\\E"
+  }, {
+    "pattern":"\\Qsprites/background-night.png\\E"
+  }, {
+    "pattern":"\\Qsprites/base.png\\E"
+  }, {
+    "pattern":"\\Qsprites/bluebird-downflap.png\\E"
+  }, {
+    "pattern":"\\Qsprites/bluebird-midflap.png\\E"
+  }, {
+    "pattern":"\\Qsprites/bluebird-upflap.png\\E"
+  }, {
+    "pattern":"\\Qsprites/gameover.png\\E"
+  }, {
+    "pattern":"\\Qsprites/message.png\\E"
+  }, {
+    "pattern":"\\Qsprites/pipe-red.png\\E"
+  }, {
+    "pattern":"\\Qsprites/yellowbird-downflap.png\\E"
+  }, {
+    "pattern":"\\Qsprites/yellowbird-midflap.png\\E"
+  }, {
+    "pattern":"\\Qsprites/yellowbird-upflap.png\\E"
+  }]},
+  "bundles":[{
+    "name":"com.sun.swing.internal.plaf.basic.resources.basic",
+    "classNames":["com.sun.swing.internal.plaf.basic.resources.basic"]
+  }, {
+    "name":"com.sun.swing.internal.plaf.metal.resources.metal",
+    "classNames":["com.sun.swing.internal.plaf.metal.resources.metal"]
+  }, {
+    "name":"sun.awt.resources.awt",
+    "classNames":["sun.awt.resources.awt"]
+  }]
+}

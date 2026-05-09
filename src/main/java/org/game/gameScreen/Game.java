@@ -2,42 +2,43 @@ package org.game.gamescreen;
 
 import java.awt.Dimension;
 import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
-import javax.swing.ImageIcon;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 
+import org.game.util.AssetLoader;
 import org.game.util.GenerateRandom;
 import org.game.util.constants.AppContext;
 
 public class Game {
 
+    private Timer flapTimer;
+
     private JPanel jpanel;
-    private Timer animationTimer;
+    // private Timer animationTimer;
 
     public JPanel getJPanel() {
         return this.jpanel;
     }
 
-    private RotatableLabel bird;
-    private JLabel base;
+    private RotatableSprite bird;
+    private SpriteComponent base;
 
-    private Map<String, JLabel> assets;
+    private Map<String, SpriteComponent> assets;
 
-    public Map<String, JLabel> getAssets() { return this.assets; }
-    public void setAssets(Map<String, JLabel> assets) { this.assets = assets; }
+    public Map<String, SpriteComponent> getAssets() { return this.assets; }
+    public void setAssets(Map<String, SpriteComponent> assets) { this.assets = assets; }
 
     private static final int RAND_BIRD = GenerateRandom.generateRandom(0, 3);
 
     public void initGame(JFrame jframe) {
 
         jpanel = new JPanel();
-        bird = new RotatableLabel();
-        base = new JLabel();
+        bird = new RotatableSprite();
+        base = new SpriteComponent();
 
         initPanel(jpanel);
 
@@ -61,21 +62,29 @@ public class Game {
         jpanel.setLayout(null);
     }
 
-    private void drawGame(JPanel jpanel, RotatableLabel bird, JLabel base) {
-        bird.setSize(bird.getPreferredSize());
-        bird.setIcon(new ImageIcon(AppContext.BIRD_PATHS[RAND_BIRD][0]));
+    private void drawGame(JPanel jpanel, RotatableSprite bird, SpriteComponent base) {
+        // bird.setSize(bird.getPreferredSize());
+        // ImageIcon birdIcon = AssetLoader.load(AppContext.BIRD_PATHS[RAND_BIRD][0]);
+        BufferedImage birdIcon = AssetLoader.load(AppContext.BIRD_PATHS[RAND_BIRD][0]);
+        // bird.setIcon(birdIcon);
+        bird.setImage(birdIcon);
 
-        Dimension b = bird.getPreferredSize();
+        // Dimension b = bird.getPreferredSize();
+        Dimension b = new Dimension(birdIcon.getWidth(), birdIcon.getHeight());
 
         int xBird = b.width;
-        int yBird = (jpanel.getHeight() - b.height) / 2;
+        int yBird = (jpanel.getHeight() - AppContext.BIRD_BOX_SIZE) / 2;
 
-        bird.setBounds(new Rectangle(xBird, yBird, b.width, b.height));
+        bird.setBounds(new Rectangle(xBird, yBird, AppContext.BIRD_BOX_SIZE, AppContext.BIRD_BOX_SIZE));
 
-        base.setSize(base.getPreferredSize());
-        base.setIcon(new ImageIcon(AppContext.BASE));
+        // base.setSize(base.getPreferredSize());
+        // ImageIcon baseIcon = AssetLoader.load(AppContext.BASE);
+        BufferedImage baseIcon = AssetLoader.load(AppContext.BASE);
+        // base.setIcon(baseIcon);
+        base.setImage(baseIcon);
 
-        Dimension ba = base.getPreferredSize();
+        // Dimension ba = base.getPreferredSize();
+        Dimension ba = new Dimension(baseIcon.getWidth(), baseIcon.getHeight());
 
         int xBase = 0;
         int yBase = jpanel.getHeight() - AppContext.BASE_HEIGHT;
@@ -86,18 +95,64 @@ public class Game {
         jpanel.add(bird);
     }
 
-    private void flapAnimation(JLabel bird) {
-        Timer timer = new Timer();
-        TimerTask timerTask = new TimerTask() {
-            int n = 0;
-            @Override
-            public void run() {
-                if (n == AppContext.BIRD_PATHS[RAND_BIRD].length) n = 0;
-                bird.setIcon(new ImageIcon(AppContext.BIRD_PATHS[RAND_BIRD][n]));
-                n++;
-            }
-        };
+    // private void flapAnimation(SpriteComponent bird) {
+    //     Timer timer = new Timer();
+    //     TimerTask timerTask = new TimerTask() {
+    //         int n = 0;
+    //         @Override
+    //         public void run() {
+    //             if (n == AppContext.BIRD_PATHS[RAND_BIRD].length) n = 0;
+    //             // bird.setIcon(AssetLoader.load(AppContext.BIRD_PATHS[RAND_BIRD][n]));
+    //             bird.setImage(AssetLoader.load(AppContext.BIRD_PATHS[RAND_BIRD][n]));
+    //             n++;
+    //         }
+    //     };
 
-        timer.schedule(timerTask, 0, AppContext.REFRESH);
+    //     timer.schedule(timerTask, 0, AppContext.REFRESH);
+    // }
+
+    // private void flapAnimation(SpriteComponent bird) {
+    //     if (flapTimer != null && flapTimer.isRunning()) {
+    //         flapTimer.stop();
+    //     }
+
+    //     final int[] n = {0};
+
+    //     flapTimer = new Timer(AppContext.REFRESH, e -> {
+    //         if (n[0] == AppContext.BIRD_PATHS[RAND_BIRD].length) {
+    //             n[0] = 0;
+    //         }
+
+    //         bird.setImage(AssetLoader.load(AppContext.BIRD_PATHS[RAND_BIRD][n[0]]));
+    //         n[0]++;
+    //     });
+
+    //     flapTimer.start();
+    // }
+
+    private void flapAnimation(SpriteComponent bird) {
+        if (flapTimer != null && flapTimer.isRunning()) {
+            flapTimer.stop();
+        }
+
+        final int[] frame = {0};
+
+        flapTimer = new Timer(AppContext.BIRD_ANIMATION_REFRESH, e -> {
+            if (frame[0] == AppContext.BIRD_PATHS[RAND_BIRD].length) {
+                frame[0] = 0;
+            }
+
+            bird.setImage(AssetLoader.load(AppContext.BIRD_PATHS[RAND_BIRD][frame[0]]));
+            frame[0]++;
+        });
+
+        flapTimer.start();
+    }
+
+    public void stop() {
+        if (flapTimer != null) {
+            flapTimer.stop();
+            flapTimer = null;
+        }
     }
 }
