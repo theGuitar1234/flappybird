@@ -1,2 +1,11 @@
 ### target/ ###
 target/
+
+### .jar ###
+*.jar
+
+### target/ ###
+target/
+
+### binaries/ ###
+binaries/
